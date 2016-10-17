@@ -1,85 +1,77 @@
 package com.namhv.gallery.adapters;
 
-import android.content.Context;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
 import com.namhv.gallery.R;
+import com.namhv.gallery.activities.MediaActivity;
 import com.namhv.gallery.models.Medium;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
-public class MediaAdapter extends BaseAdapter {
-    private final Context mContext;
+public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaViewHolder> {
+    private final MediaActivity mMediaActivity;
     private final List<Medium> mMedia;
-    private final LayoutInflater mInflater;
 
-    public MediaAdapter(Context context, List<Medium> media) {
-        mContext = context;
+    public MediaAdapter(MediaActivity mediaActivity, List<Medium> media) {
+        this.mMediaActivity = mediaActivity;
         mMedia = media;
-        mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        final Medium medium = mMedia.get(position);
-        ViewHolder viewHolder;
-        if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.photo_video_item, parent, false);
-            viewHolder = new ViewHolder(convertView);
-            convertView.setTag(viewHolder);
-        } else {
-            viewHolder = (ViewHolder) convertView.getTag();
-        }
-
-        if (medium.getIsVideo()) {
-            viewHolder.playOutline.setVisibility(View.VISIBLE);
-        } else {
-            viewHolder.playOutline.setVisibility(View.GONE);
-        }
-
-        final String path = medium.getPath();
-        final StringSignature timestampSignature = new StringSignature(String.valueOf(medium.getTimestamp()));
-
-        Glide.with(mContext).load(path).diskCacheStrategy(DiskCacheStrategy.NONE).signature(timestampSignature)
-                .placeholder(R.color.tmb_background).centerCrop().crossFade().into(viewHolder.photoThumbnail);
-
-
-        return convertView;
+    public MediaViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.photo_video_item, parent, false);
+        return new MediaViewHolder(view);
     }
 
     @Override
-    public int getCount() {
-        return mMedia.size();
+    public void onBindViewHolder(MediaViewHolder holder, int position) {
+        Medium medium = mMedia.get(position);
+        holder.bindData(mMediaActivity, medium);
     }
 
     @Override
-    public Object getItem(int position) {
-        return mMedia.get(position);
+    public int getItemCount() {
+        return mMedia == null ? 0 : mMedia.size();
     }
 
-    @Override
-    public long getItemId(int position) {
-        return 0;
-    }
 
-    static class ViewHolder {
-        @BindView(R.id.medium_thumbnail)
+    static class MediaViewHolder extends RecyclerView.ViewHolder {
         ImageView photoThumbnail;
-        @BindView(R.id.play_outline)
         View playOutline;
 
-        public ViewHolder(View view) {
-            ButterKnife.bind(this, view);
+        MediaViewHolder(View view) {
+            super(view);
+
+            photoThumbnail = (ImageView) view.findViewById(R.id.medium_thumbnail);
+            playOutline = view.findViewById(R.id.play_outline);
+        }
+
+        void bindData(final MediaActivity mediaActivity, final Medium medium) {
+            if (medium.getIsVideo()) {
+                playOutline.setVisibility(View.VISIBLE);
+            } else {
+                playOutline.setVisibility(View.GONE);
+            }
+
+            final String path = medium.getPath();
+            final StringSignature timestampSignature = new StringSignature(String.valueOf(medium.getTimestamp()));
+
+            Glide.with(mediaActivity).load(path).diskCacheStrategy(DiskCacheStrategy.NONE).signature(timestampSignature)
+                    .placeholder(R.color.tmb_background).centerCrop().crossFade().into(photoThumbnail);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    mediaActivity.onItemClick(medium);
+                }
+            });
         }
     }
 }

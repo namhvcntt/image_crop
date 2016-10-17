@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -22,6 +24,7 @@ import com.namhv.gallery.Constants;
 import com.namhv.gallery.R;
 import com.namhv.gallery.Utils;
 import com.namhv.gallery.adapters.DirectoryAdapter;
+import com.namhv.gallery.callbacks.OnDirectoryClickListener;
 import com.namhv.gallery.models.Directory;
 
 import java.io.File;
@@ -36,9 +39,9 @@ import java.util.Set;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class GalleryMainActivity extends SimpleActivity implements AdapterView.OnItemClickListener {
-    @BindView(R.id.directories_grid)
-    GridView mGridView;
+public class GalleryMainActivity extends SimpleActivity implements OnDirectoryClickListener {
+
+    RecyclerView mGridView;
 
     private static final int STORAGE_PERMISSION = 1;
     private static final int PICK_MEDIA = 2;
@@ -58,7 +61,6 @@ public class GalleryMainActivity extends SimpleActivity implements AdapterView.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.media_chooser_main_activity);
-        ButterKnife.bind(this);
 
         final Intent intent = getIntent();
         mIsPickImageIntent = isPickImageIntent(intent);
@@ -71,6 +73,9 @@ public class GalleryMainActivity extends SimpleActivity implements AdapterView.O
 
         mToBeDeleted = new ArrayList<>();
         mDirs = new ArrayList<>();
+
+
+        mGridView = (RecyclerView) findViewById(R.id.directories_grid);
     }
 
     @Override
@@ -97,16 +102,16 @@ public class GalleryMainActivity extends SimpleActivity implements AdapterView.O
     protected void onResume() {
         super.onResume();
         tryLoadGallery();
-        if (mState != null && mGridView != null)
-            mGridView.onRestoreInstanceState(mState);
+//        if (mState != null && mGridView != null)
+//            mGridView.onRestoreInstanceState(mState);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         deleteDirs();
-        if (mGridView != null)
-            mState = mGridView.onSaveInstanceState();
+//        if (mGridView != null)
+//            mState = mGridView.onSaveInstanceState();
     }
 
     @Override
@@ -144,9 +149,10 @@ public class GalleryMainActivity extends SimpleActivity implements AdapterView.O
         }
         mDirs = newDirs;
 
+        mGridView.setLayoutManager(new GridLayoutManager(this, 2));
         final DirectoryAdapter adapter = new DirectoryAdapter(this, mDirs);
         mGridView.setAdapter(adapter);
-        mGridView.setOnItemClickListener(this);
+
     }
 
     private List<Directory> getDirectories() {
@@ -360,9 +366,9 @@ public class GalleryMainActivity extends SimpleActivity implements AdapterView.O
     }
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    public void onItemClick(Directory directory) {
         final Intent intent = new Intent(this, MediaActivity.class);
-        intent.putExtra(Constants.DIRECTORY, mDirs.get(position).getPath());
+        intent.putExtra(Constants.DIRECTORY, directory.getPath());
         intent.putExtra(Constants.GET_VIDEO_INTENT, mIsPickVideoIntent || mIsGetVideoContentIntent);
         intent.putExtra(Constants.GET_ANY_INTENT, mIsGetAnyContentIntent);
         startActivityForResult(intent, PICK_MEDIA);

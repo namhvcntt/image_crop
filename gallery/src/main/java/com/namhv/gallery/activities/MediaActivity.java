@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
@@ -15,6 +17,7 @@ import com.namhv.gallery.Constants;
 import com.namhv.gallery.R;
 import com.namhv.gallery.Utils;
 import com.namhv.gallery.adapters.MediaAdapter;
+import com.namhv.gallery.callbacks.OnMediaClickListener;
 import com.namhv.gallery.models.Medium;
 import com.namhv.image_crop.CropImageActivity;
 
@@ -27,9 +30,9 @@ import java.util.regex.Pattern;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MediaActivity extends SimpleActivity implements AdapterView.OnItemClickListener {
-    @BindView(R.id.media_grid)
-    GridView mGridView;
+public class MediaActivity extends SimpleActivity implements OnMediaClickListener {
+
+    RecyclerView mGridView;
 
     private static List<Medium> mMedia;
     private static String mPath;
@@ -44,29 +47,31 @@ public class MediaActivity extends SimpleActivity implements AdapterView.OnItemC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media);
-        ButterKnife.bind(this);
         mIsGetImageIntent = getIntent().getBooleanExtra(Constants.GET_IMAGE_INTENT, false);
         mIsGetVideoIntent = getIntent().getBooleanExtra(Constants.GET_VIDEO_INTENT, false);
         mIsGetAnyIntent = getIntent().getBooleanExtra(Constants.GET_ANY_INTENT, false);
         mToBeDeleted = new ArrayList<>();
         mPath = getIntent().getStringExtra(Constants.DIRECTORY);
         mMedia = new ArrayList<>();
+
+
+        mGridView = (RecyclerView) findViewById(R.id.media_grid);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         tryloadGallery();
-        if (mState != null && mGridView != null) {
-            mGridView.onRestoreInstanceState(mState);
-        }
+//        if (mState != null && mGridView != null) {
+//            mGridView.onRestoreInstanceState(mState);
+//        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         if (mGridView != null && isChangingConfigurations()) {
-            mState = mGridView.onSaveInstanceState();
+//            mState = mGridView.onSaveInstanceState();
         } else {
             mState = null;
         }
@@ -90,9 +95,10 @@ public class MediaActivity extends SimpleActivity implements AdapterView.OnItemC
         if (isDirEmpty())
             return;
 
+
+        mGridView.setLayoutManager(new GridLayoutManager(this, 3));
         final MediaAdapter adapter = new MediaAdapter(this, mMedia);
         mGridView.setAdapter(adapter);
-        mGridView.setOnItemClickListener(this);
 
         final String dirName = Utils.getFilename(mPath);
         setTitle(dirName);
@@ -163,8 +169,8 @@ public class MediaActivity extends SimpleActivity implements AdapterView.OnItemC
     }
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        final String curItemPath = mMedia.get(position).getPath();
+    public void onItemClick(Medium medium) {
+        final String curItemPath = medium.getPath();
         if (mIsGetImageIntent || mIsGetVideoIntent || mIsGetAnyIntent || true) {
             Intent intent = new Intent(this, CropImageActivity.class);
             intent.putExtra(CropImageActivity.ARG_IMAGE_PATH, curItemPath);
