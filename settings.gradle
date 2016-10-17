@@ -1,1 +1,1 @@
-include ':app', ':media_chooser'
+include ':crop_image', ':media_chooser'

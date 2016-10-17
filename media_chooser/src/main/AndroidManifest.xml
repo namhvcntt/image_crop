@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.simplemobiletools.gallery">
+    package="com.namhv.gallery">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.SET_WALLPAPER"/>
@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".activities.MainActivity">
+            android:name="com.namhv.gallery.activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -44,8 +44,8 @@
         </activity>
 
         <activity
-            android:name=".activities.MediaActivity"
-            android:parentActivityName=".activities.MainActivity"/>
+            android:name="com.namhv.gallery.activities.MediaActivity"
+            android:parentActivityName="com.namhv.gallery.activities.MainActivity"/>
 
     </application>
 </manifest>
