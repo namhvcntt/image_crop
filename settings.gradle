@@ -1,1 +1,1 @@
-include ':crop_image', ':media_chooser'
+include ':gallery'
