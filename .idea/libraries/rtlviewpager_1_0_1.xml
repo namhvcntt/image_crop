@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="rtlviewpager-1.0.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/media_chooser/build/intermediates/exploded-aar/com.booking/rtlviewpager/1.0.1/jars/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/media_chooser/build/intermediates/exploded-aar/com.booking/rtlviewpager/1.0.1/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.booking/rtlviewpager/1.0.1/30a3c1736af6c17e4716d6f8d5b9b1b845f5c617/rtlviewpager-1.0.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

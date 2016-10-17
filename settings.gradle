@@ -1,1 +1,1 @@
-include ':simplecropview-sample'
+include ':app', ':media_chooser'

@@ -30,7 +30,7 @@ import permissions.dispatcher.PermissionRequest;
 import permissions.dispatcher.RuntimePermissions;
 
 @RuntimePermissions
-public class MainFragment extends Fragment {
+public class CropImageFragment extends Fragment {
     private static final int REQUEST_PICK_IMAGE = 10011;
     private static final int REQUEST_SAF_PICK_IMAGE = 10012;
     private static final String PROGRESS_DIALOG = "ProgressDialog";
@@ -39,11 +39,11 @@ public class MainFragment extends Fragment {
     private CropImageView mCropView;
 
     // Note: only the system can call this constructor by reflection. 
-    public MainFragment() {
+    public CropImageFragment() {
     }
 
-    public static MainFragment getInstance() {
-        MainFragment fragment = new MainFragment();
+    public static CropImageFragment getInstance() {
+        CropImageFragment fragment = new CropImageFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -177,7 +177,7 @@ public class MainFragment extends Fragment {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.buttonDone:
-                    MainFragmentPermissionsDispatcher.cropImageWithCheck(MainFragment.this);
+                    MainFragmentPermissionsDispatcher.cropImageWithCheck(CropImageFragment.this);
                     break;
                 case R.id.buttonRotateLeft:
                     mCropView.rotateImage(CropImageView.RotateDegrees.ROTATE_M90D);
@@ -186,7 +186,7 @@ public class MainFragment extends Fragment {
                     mCropView.rotateImage(CropImageView.RotateDegrees.ROTATE_90D);
                     break;
                 case R.id.buttonPickImage:
-                    MainFragmentPermissionsDispatcher.pickImageWithCheck(MainFragment.this);
+                    MainFragmentPermissionsDispatcher.pickImageWithCheck(CropImageFragment.this);
                     break;
             }
         }
