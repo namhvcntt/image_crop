@@ -1,70 +1,64 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/layout_root"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+                xmlns:custom="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/layout_root"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/white"
+                android:orientation="vertical">
 
 
     <RelativeLayout
         android:id="@+id/rlt_control"
-        android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/windowBackground"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/darker_gray"
         android:orientation="horizontal">
 
         <View
             android:id="@+id/center_view"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:layout_centerInParent="true" />
+            android:layout_centerInParent="true"/>
 
-
-        <ImageButton
+        <ImageView
             android:id="@+id/buttonRotateLeft"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toLeftOf="@id/center_view"
             android:layout_toStartOf="@id/center_view"
-            android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="16dp"
-            android:src="@drawable/ic_rotate_left_black_24dp" />
+            android:src="@drawable/ic_rotate_left_black_24dp"/>
 
-        <ImageButton
+        <ImageView
             android:id="@+id/buttonRotateRight"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/center_view"
             android:layout_toRightOf="@id/center_view"
-            android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="16dp"
-            android:src="@drawable/ic_rotate_right_black_24dp" />
+            android:src="@drawable/ic_rotate_right_black_24dp"/>
 
 
-        <TextView
+        <android.support.v7.widget.AppCompatButton
             android:id="@+id/buttonDone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_toEndOf="@id/buttonRotateRight"
             android:layout_toRightOf="@id/buttonRotateRight"
-            android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="16dp"
-            android:src="@drawable/ic_done_black_24dp"
-            android:text="Done" />
+            android:text="Done"/>
 
-        <TextView
-            android:id="@+id/buttonPickImage"
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/buttonCancelCrop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="16dp"
-            android:src="@drawable/ic_photo_library_black_24dp"
-            android:text="Cancel"
-            android:layout_alignParentTop="true"
+            android:layout_centerVertical="true"
             android:layout_toLeftOf="@+id/buttonRotateLeft"
-            android:layout_toStartOf="@+id/buttonRotateLeft" />
+            android:layout_toStartOf="@+id/buttonRotateLeft"
+            android:padding="16dp"
+            android:text="Cancel"/>
     </RelativeLayout>
 
 
@@ -77,7 +71,6 @@
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:paddingTop="16dp"
-        custom:scv_background_color="@color/windowBackground"
         custom:scv_crop_mode="fit_image"
         custom:scv_frame_color="@color/colorAccent"
         custom:scv_frame_stroke_weight="1dp"
@@ -89,5 +82,5 @@
         custom:scv_handle_size="14dp"
         custom:scv_min_frame_size="50dp"
         custom:scv_overlay_color="@color/overlay"
-        custom:scv_touch_padding="8dp" />
+        custom:scv_touch_padding="8dp"/>
 </RelativeLayout>

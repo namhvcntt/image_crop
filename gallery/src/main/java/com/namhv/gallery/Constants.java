@@ -4,7 +4,6 @@ public class Constants {
     public static final String DIRECTORY = "directory";
     public static final String GET_IMAGE_INTENT = "get_image_intent";
     public static final String GET_VIDEO_INTENT = "get_video_intent";
-    public static final String GET_ANY_INTENT = "get_any_intent";
 
     // shared preferences
     static final String PREFS_KEY = "Gallery";

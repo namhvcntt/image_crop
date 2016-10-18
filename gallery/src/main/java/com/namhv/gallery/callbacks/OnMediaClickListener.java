@@ -1,6 +1,5 @@
 package com.namhv.gallery.callbacks;
 
-import com.namhv.gallery.models.Directory;
 import com.namhv.gallery.models.Medium;
 
 /**
@@ -8,5 +7,5 @@ import com.namhv.gallery.models.Medium;
  */
 
 public interface OnMediaClickListener {
-    public void onItemClick(Medium medium);
+    void onItemClick(Medium medium);
 }

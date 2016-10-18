@@ -11,7 +11,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
 import com.namhv.gallery.R;
-import com.namhv.gallery.activities.GalleryMainActivity;
+import com.namhv.gallery.activities.GalleryActivity;
 import com.namhv.gallery.models.Directory;
 
 import java.util.List;
@@ -20,10 +20,10 @@ import butterknife.ButterKnife;
 
 public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.DirectoryViewHolder> {
 
-    private final GalleryMainActivity mActivity;
+    private final GalleryActivity mActivity;
     private final List<Directory> mDirs;
 
-    public DirectoryAdapter(GalleryMainActivity activity, List<Directory> dirs) {
+    public DirectoryAdapter(GalleryActivity activity, List<Directory> dirs) {
         mActivity = activity;
         mDirs = dirs;
     }
@@ -60,7 +60,7 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.Dire
             ButterKnife.bind(this, view);
         }
 
-        void bindData(final GalleryMainActivity galleryMainActivity, final Directory dir) {
+        void bindData(final GalleryActivity galleryMainActivity, final Directory dir) {
             dirName.setText(dir.getName());
             photoCnt.setText(String.valueOf(dir.getMediaCnt()));
             final String tmb = dir.getThumbnail();

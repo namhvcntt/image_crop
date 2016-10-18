@@ -5,13 +5,9 @@ import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.GridView;
 
 import com.namhv.gallery.Constants;
 import com.namhv.gallery.R;
@@ -27,8 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import static com.namhv.gallery.activities.GalleryActivity.PICK_MEDIA;
 
 public class MediaActivity extends SimpleActivity implements OnMediaClickListener {
 
@@ -36,12 +31,9 @@ public class MediaActivity extends SimpleActivity implements OnMediaClickListene
 
     private static List<Medium> mMedia;
     private static String mPath;
-    private static List<String> mToBeDeleted;
-    private static Parcelable mState;
 
     private static boolean mIsGetImageIntent;
     private static boolean mIsGetVideoIntent;
-    private static boolean mIsGetAnyIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +41,6 @@ public class MediaActivity extends SimpleActivity implements OnMediaClickListene
         setContentView(R.layout.activity_media);
         mIsGetImageIntent = getIntent().getBooleanExtra(Constants.GET_IMAGE_INTENT, false);
         mIsGetVideoIntent = getIntent().getBooleanExtra(Constants.GET_VIDEO_INTENT, false);
-        mIsGetAnyIntent = getIntent().getBooleanExtra(Constants.GET_ANY_INTENT, false);
-        mToBeDeleted = new ArrayList<>();
         mPath = getIntent().getStringExtra(Constants.DIRECTORY);
         mMedia = new ArrayList<>();
 
@@ -61,23 +51,10 @@ public class MediaActivity extends SimpleActivity implements OnMediaClickListene
     @Override
     protected void onResume() {
         super.onResume();
-        tryloadGallery();
-//        if (mState != null && mGridView != null) {
-//            mGridView.onRestoreInstanceState(mState);
-//        }
+        tryLoadGallery();
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mGridView != null && isChangingConfigurations()) {
-//            mState = mGridView.onSaveInstanceState();
-        } else {
-            mState = null;
-        }
-    }
-
-    private void tryloadGallery() {
+    private void tryLoadGallery() {
         if (Utils.hasStoragePermission(getApplicationContext())) {
             initializeGallery();
         } else {
@@ -135,7 +112,7 @@ public class MediaActivity extends SimpleActivity implements OnMediaClickListene
                 final int pathIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
                 do {
                     final String curPath = cursor.getString(pathIndex);
-                    if (curPath.matches(pattern) && !mToBeDeleted.contains(curPath)) {
+                    if (curPath.matches(pattern)) {
                         final File file = new File(curPath);
                         if (file.exists()) {
                             final int dateIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN);
@@ -171,14 +148,34 @@ public class MediaActivity extends SimpleActivity implements OnMediaClickListene
     @Override
     public void onItemClick(Medium medium) {
         final String curItemPath = medium.getPath();
-        if (mIsGetImageIntent || mIsGetVideoIntent || mIsGetAnyIntent || true) {
-            Intent intent = new Intent(this, CropImageActivity.class);
-            intent.putExtra(CropImageActivity.ARG_IMAGE_PATH, curItemPath);
-            startActivity(intent);
-//            final Intent result = new Intent();
-//            result.setData(Uri.parse(curItemPath));
-//            setResult(RESULT_OK, result);
-            finish();
+        if (mIsGetImageIntent || mIsGetVideoIntent) {
+            if (medium.getIsVideo()) {
+                final Intent result = new Intent();
+                result.setData(Uri.parse(curItemPath));
+                setResult(RESULT_OK, result);
+                finish();
+            } else {
+                Intent intent = new Intent(this, CropImageActivity.class);
+                intent.putExtra(CropImageActivity.ARG_IMAGE_PATH, curItemPath);
+                startActivityForResult(intent, PICK_MEDIA);
+            }
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode == PICK_MEDIA && data != null) {
+                final Intent result = new Intent();
+                final String path = data.getData().getPath();
+                final Uri uri = Uri.fromFile(new File(path));
+                result.setData(uri);
+                result.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                setResult(RESULT_OK, result);
+                finish();
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

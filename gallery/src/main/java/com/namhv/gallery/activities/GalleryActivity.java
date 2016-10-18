@@ -7,17 +7,12 @@ import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.GridView;
 
 import com.namhv.gallery.Config;
 import com.namhv.gallery.Constants;
@@ -36,25 +31,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
-public class GalleryMainActivity extends SimpleActivity implements OnDirectoryClickListener {
-
-    RecyclerView mGridView;
-
+public class GalleryActivity extends SimpleActivity implements OnDirectoryClickListener {
+    // Request permision code
     private static final int STORAGE_PERMISSION = 1;
-    private static final int PICK_MEDIA = 2;
+
+    // Intent code
+    public static final int PICK_MEDIA = 111;
+    public static final String PICK_IMAGE = "PICK_IMAGE";
+    public static final String PICK_VIDEO = "PICK_VIDEO";
+
+    private RecyclerView mRcDirectories;
 
     private static List<Directory> mDirs;
     private static List<String> mToBeDeleted;
-    private static Parcelable mState;
 
     private static boolean mIsPickImageIntent;
     private static boolean mIsPickVideoIntent;
-    private static boolean mIsGetImageContentIntent;
-    private static boolean mIsGetVideoContentIntent;
-    private static boolean mIsGetAnyContentIntent;
     private static boolean mIsThirdPartyIntent;
 
     @Override
@@ -65,17 +57,13 @@ public class GalleryMainActivity extends SimpleActivity implements OnDirectoryCl
         final Intent intent = getIntent();
         mIsPickImageIntent = isPickImageIntent(intent);
         mIsPickVideoIntent = isPickVideoIntent(intent);
-        mIsGetImageContentIntent = isGetImageContentIntent(intent);
-        mIsGetVideoContentIntent = isGetVideoContentIntent(intent);
-        mIsGetAnyContentIntent = isGetAnyContentIntent(intent);
-        mIsThirdPartyIntent = mIsPickImageIntent || mIsPickVideoIntent || mIsGetImageContentIntent || mIsGetVideoContentIntent ||
-                mIsGetAnyContentIntent;
+        mIsThirdPartyIntent = mIsPickImageIntent || mIsPickVideoIntent;
 
         mToBeDeleted = new ArrayList<>();
         mDirs = new ArrayList<>();
 
 
-        mGridView = (RecyclerView) findViewById(R.id.directories_grid);
+        mRcDirectories = (RecyclerView) findViewById(R.id.directories_grid);
     }
 
     @Override
@@ -102,16 +90,12 @@ public class GalleryMainActivity extends SimpleActivity implements OnDirectoryCl
     protected void onResume() {
         super.onResume();
         tryLoadGallery();
-//        if (mState != null && mGridView != null)
-//            mGridView.onRestoreInstanceState(mState);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         deleteDirs();
-//        if (mGridView != null)
-//            mState = mGridView.onSaveInstanceState();
     }
 
     @Override
@@ -149,9 +133,9 @@ public class GalleryMainActivity extends SimpleActivity implements OnDirectoryCl
         }
         mDirs = newDirs;
 
-        mGridView.setLayoutManager(new GridLayoutManager(this, 2));
+        mRcDirectories.setLayoutManager(new GridLayoutManager(this, 2));
         final DirectoryAdapter adapter = new DirectoryAdapter(this, mDirs);
-        mGridView.setAdapter(adapter);
+        mRcDirectories.setAdapter(adapter);
 
     }
 
@@ -159,12 +143,12 @@ public class GalleryMainActivity extends SimpleActivity implements OnDirectoryCl
         final Map<String, Directory> directories = new LinkedHashMap<>();
         final List<String> invalidFiles = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
-            if ((mIsPickVideoIntent || mIsGetVideoContentIntent) && i == 0)
+            if ((mIsPickVideoIntent) && i == 0)
                 continue;
 
             Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             if (i == 1) {
-                if (mIsPickImageIntent || mIsGetImageContentIntent)
+                if (mIsPickImageIntent)
                     continue;
 
                 uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
@@ -292,54 +276,11 @@ public class GalleryMainActivity extends SimpleActivity implements OnDirectoryCl
     }
 
     private boolean isPickImageIntent(Intent intent) {
-        return isPickIntent(intent) && (hasImageContentData(intent) || isImageType(intent));
+        return PICK_IMAGE.contentEquals(intent.getAction());
     }
 
     private boolean isPickVideoIntent(Intent intent) {
-        return isPickIntent(intent) && (hasVideoContentData(intent) || isVideoType(intent));
-    }
-
-    private boolean isPickIntent(Intent intent) {
-        return intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_PICK);
-    }
-
-    private boolean isGetContentIntent(Intent intent) {
-        return intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_GET_CONTENT) &&
-                intent.getType() != null;
-    }
-
-    private boolean isGetImageContentIntent(Intent intent) {
-        return isGetContentIntent(intent) &&
-                (intent.getType().startsWith("image/") || intent.getType().equals(MediaStore.Images.Media.CONTENT_TYPE));
-    }
-
-    private boolean isGetVideoContentIntent(Intent intent) {
-        return isGetContentIntent(intent) &&
-                (intent.getType().startsWith("video/") || intent.getType().equals(MediaStore.Video.Media.CONTENT_TYPE));
-    }
-
-    private boolean isGetAnyContentIntent(Intent intent) {
-        return isGetContentIntent(intent) && intent.getType().equals("*/*");
-    }
-
-    private boolean hasImageContentData(Intent intent) {
-        final Uri data = intent.getData();
-        return data != null && data.equals(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-    }
-
-    private boolean hasVideoContentData(Intent intent) {
-        final Uri data = intent.getData();
-        return data != null && data.equals(MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
-    }
-
-    private boolean isImageType(Intent intent) {
-        final String type = intent.getType();
-        return type != null && (type.startsWith("image/") || type.equals(MediaStore.Images.Media.CONTENT_TYPE));
-    }
-
-    private boolean isVideoType(Intent intent) {
-        final String type = intent.getType();
-        return type != null && (type.startsWith("video/") || type.equals(MediaStore.Video.Media.CONTENT_TYPE));
+        return PICK_VIDEO.contentEquals(intent.getAction());
     }
 
     @Override
@@ -349,11 +290,7 @@ public class GalleryMainActivity extends SimpleActivity implements OnDirectoryCl
                 final Intent result = new Intent();
                 final String path = data.getData().getPath();
                 final Uri uri = Uri.fromFile(new File(path));
-                if (mIsGetImageContentIntent || mIsGetVideoContentIntent || mIsGetAnyContentIntent) {
-                    final String type = Utils.getMimeType(path);
-                    result.setDataAndTypeAndNormalize(uri, type);
-                    result.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                } else if (mIsPickImageIntent || mIsPickVideoIntent) {
+                if (mIsPickImageIntent || mIsPickVideoIntent) {
                     result.setData(uri);
                     result.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
@@ -369,8 +306,8 @@ public class GalleryMainActivity extends SimpleActivity implements OnDirectoryCl
     public void onItemClick(Directory directory) {
         final Intent intent = new Intent(this, MediaActivity.class);
         intent.putExtra(Constants.DIRECTORY, directory.getPath());
-        intent.putExtra(Constants.GET_VIDEO_INTENT, mIsPickVideoIntent || mIsGetVideoContentIntent);
-        intent.putExtra(Constants.GET_ANY_INTENT, mIsGetAnyContentIntent);
+        intent.putExtra(Constants.GET_VIDEO_INTENT, mIsPickVideoIntent);
+        intent.putExtra(Constants.GET_IMAGE_INTENT, mIsPickImageIntent);
         startActivityForResult(intent, PICK_MEDIA);
     }
 }

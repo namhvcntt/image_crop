@@ -1,14 +1,5 @@
 package com.namhv.image_crop;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.namhv.gallery.R;
-import com.namhv.image_crop.image_crop.CropImageView;
-import com.namhv.image_crop.image_crop.callback.CropCallback;
-import com.namhv.image_crop.image_crop.callback.LoadCallback;
-import com.namhv.image_crop.image_crop.callback.SaveCallback;
-import com.namhv.image_crop.image_crop.util.Utils;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -26,6 +17,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.namhv.gallery.R;
+import com.namhv.image_crop.image_crop.CropImageView;
+import com.namhv.image_crop.image_crop.callback.CropCallback;
+import com.namhv.image_crop.image_crop.callback.SaveCallback;
+
 import java.io.File;
 
 import permissions.dispatcher.NeedsPermission;
@@ -35,7 +33,6 @@ import permissions.dispatcher.RuntimePermissions;
 
 @RuntimePermissions
 public class CropImageFragment extends Fragment {
-
     private static final String ARG_IMAGE_PATH = "img_path";
     private static final int REQUEST_PICK_IMAGE = 10011;
     private static final int REQUEST_SAF_PICK_IMAGE = 10012;
@@ -54,7 +51,7 @@ public class CropImageFragment extends Fragment {
     public static CropImageFragment getInstance(String imgPath) {
         CropImageFragment fragment = new CropImageFragment();
         Bundle args = new Bundle();
-        args.putString(PROGRESS_DIALOG, imgPath);
+        args.putString(ARG_IMAGE_PATH, imgPath);
         fragment.setArguments(args);
         return fragment;
     }
@@ -79,20 +76,14 @@ public class CropImageFragment extends Fragment {
         mImagePath = getArguments().getString(ARG_IMAGE_PATH);
         // set bitmap to CropImageView
         if (mCropView.getImageBitmap() == null && !TextUtils.isEmpty(mImagePath)) {
-            Glide.with(getActivity()).load(mImagePath).asGif().diskCacheStrategy(DiskCacheStrategy.NONE).into(mCropView);
+            File file = new File(mImagePath);
+            Uri imageUri = Uri.fromFile(file);
+            Glide.with(getActivity())
+                    .load(imageUri)
+                    .asBitmap()
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(mCropView);
             mCropView.setCropMode(CropImageView.CropMode.SQUARE);
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent result) {
-        super.onActivityResult(requestCode, resultCode, result);
-        if (requestCode == REQUEST_PICK_IMAGE && resultCode == Activity.RESULT_OK) {
-            showProgress();
-            mCropView.startLoad(result.getData(), mLoadCallback);
-        } else if (requestCode == REQUEST_SAF_PICK_IMAGE && resultCode == Activity.RESULT_OK) {
-            showProgress();
-            mCropView.startLoad(Utils.ensureUriPermission(getContext(), result), mLoadCallback);
         }
     }
 
@@ -107,7 +98,7 @@ public class CropImageFragment extends Fragment {
     private void bindViews(View view) {
         mCropView = (CropImageView) view.findViewById(R.id.cropImageView);
         view.findViewById(R.id.buttonDone).setOnClickListener(btnListener);
-        view.findViewById(R.id.buttonPickImage).setOnClickListener(btnListener);
+        view.findViewById(R.id.buttonCancelCrop).setOnClickListener(btnListener);
         view.findViewById(R.id.buttonRotateLeft).setOnClickListener(btnListener);
         view.findViewById(R.id.buttonRotateRight).setOnClickListener(btnListener);
     }
@@ -196,27 +187,17 @@ public class CropImageFragment extends Fragment {
                 case R.id.buttonRotateRight:
                     mCropView.rotateImage(CropImageView.RotateDegrees.ROTATE_90D);
                     break;
-                case R.id.buttonPickImage:
-                    CropImageFragmentPermissionsDispatcher.pickImageWithCheck(CropImageFragment.this);
+                case R.id.buttonCancelCrop:
+                    // Return value
+                    Intent result = new Intent();
+                    getActivity().setResult(Activity.RESULT_CANCELED, result);
+                    getActivity().finish();
                     break;
             }
         }
     };
 
     // Callbacks ///////////////////////////////////////////////////////////////////////////////////
-
-    private final LoadCallback mLoadCallback = new LoadCallback() {
-        @Override
-        public void onSuccess() {
-            dismissProgress();
-        }
-
-        @Override
-        public void onError() {
-            dismissProgress();
-        }
-    };
-
     private final CropCallback mCropCallback = new CropCallback() {
         @Override
         public void onSuccess(Bitmap cropped) {
@@ -231,7 +212,11 @@ public class CropImageFragment extends Fragment {
         @Override
         public void onSuccess(Uri outputUri) {
             dismissProgress();
-            ((CropImageActivity) getActivity()).startResultActivity(outputUri);
+            // Return value
+            Intent result = new Intent();
+            result.setData(outputUri);
+            getActivity().setResult(Activity.RESULT_OK, result);
+            getActivity().finish();
         }
 
         @Override
