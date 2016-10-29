@@ -16,15 +16,11 @@ public class Utils {
         Toast.makeText(context, context.getResources().getString(resId), Toast.LENGTH_SHORT).show();
     }
 
-    public static boolean hasStoragePermission(Context cxt) {
+    public static boolean hasReadStoragePermission(Context cxt) {
         return ContextCompat.checkSelfPermission(cxt, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
-    public static String getMimeType(String url) {
-        final String extension = MimeTypeMap.getFileExtensionFromUrl(url);
-        if (extension != null) {
-            return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-        }
-        return "";
+    public static boolean hasWriteStoragePermission(Context cxt) {
+        return ContextCompat.checkSelfPermission(cxt, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 }

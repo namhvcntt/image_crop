@@ -8,19 +8,24 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.View;
 
-import com.namhv.gallery.Config;
-import com.namhv.gallery.Constants;
 import com.namhv.gallery.R;
+import com.namhv.gallery.SpacesItemDecoration;
 import com.namhv.gallery.Utils;
-import com.namhv.gallery.adapters.DirectoryAdapter;
-import com.namhv.gallery.callbacks.OnDirectoryClickListener;
+import com.namhv.gallery.adapters.MediaAdapter;
+import com.namhv.gallery.callbacks.OnMediaClickListener;
 import com.namhv.gallery.models.Directory;
+import com.namhv.gallery.models.Medium;
+import com.namhv.image_crop.CropImageActivity;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -29,9 +34,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.regex.Pattern;
 
-public class GalleryActivity extends SimpleActivity implements OnDirectoryClickListener {
+public class GalleryActivity extends AppCompatActivity implements OnMediaClickListener, View.OnClickListener {
     // Request permision code
     private static final int STORAGE_PERMISSION = 1;
 
@@ -40,50 +45,37 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
     public static final String PICK_IMAGE = "PICK_IMAGE";
     public static final String PICK_VIDEO = "PICK_VIDEO";
 
+    private static List<Medium> mMedia;
     private RecyclerView mRcDirectories;
-
-    private static List<Directory> mDirs;
-    private static List<String> mToBeDeleted;
 
     private static boolean mIsPickImageIntent;
     private static boolean mIsPickVideoIntent;
-    private static boolean mIsThirdPartyIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.media_chooser_main_activity);
+        setContentView(R.layout.activity_gallery);
+
+        // Set-up actionbar
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.findViewById(R.id.iv_back).setOnClickListener(this);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (null != actionBar) {
+            actionBar.setDisplayShowTitleEnabled(false);
+        }
 
         final Intent intent = getIntent();
         mIsPickImageIntent = isPickImageIntent(intent);
         mIsPickVideoIntent = isPickVideoIntent(intent);
-        mIsThirdPartyIntent = mIsPickImageIntent || mIsPickVideoIntent;
 
-        mToBeDeleted = new ArrayList<>();
-        mDirs = new ArrayList<>();
+        mMedia = new ArrayList<>();
 
-
-        mRcDirectories = (RecyclerView) findViewById(R.id.directories_grid);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        if (mIsThirdPartyIntent)
-            return false;
-
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.camera:
-                startActivity(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA));
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
+        mRcDirectories = (RecyclerView) findViewById(R.id.media_grid);
+        mRcDirectories.setLayoutManager(new GridLayoutManager(this, 3));
+        mRcDirectories.addItemDecoration(new SpacesItemDecoration(getResources().getDimensionPixelOffset(R.dimen.media_chooser_item_padding)));
+        MediaAdapter adapter = new MediaAdapter(this, mMedia);
+        mRcDirectories.setAdapter(adapter);
     }
 
     @Override
@@ -93,57 +85,56 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        deleteDirs();
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
-        Config.newInstance(getApplicationContext()).setIsFirstRun(false);
     }
 
     private void tryLoadGallery() {
-        if (Utils.hasStoragePermission(getApplicationContext())) {
+        if (Utils.hasReadStoragePermission(getApplicationContext())) {
             initializeGallery();
+            mRcDirectories.getAdapter().notifyDataSetChanged();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, STORAGE_PERMISSION);
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == STORAGE_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 initializeGallery();
             } else {
-                Utils.showToast(getApplicationContext(), R.string.no_permissions);
+                Utils.showToast(getApplicationContext(), R.string.no_permissions_read_storage);
                 finish();
             }
         }
     }
 
     private void initializeGallery() {
+        mMedia.clear();
         final List<Directory> newDirs = getDirectories();
-        if (newDirs.toString().equals(mDirs.toString())) {
-            return;
+        for (Directory directory : newDirs) {
+            initializeGallery(directory.getPath());
         }
-        mDirs = newDirs;
-
-        mRcDirectories.setLayoutManager(new GridLayoutManager(this, 2));
-        final DirectoryAdapter adapter = new DirectoryAdapter(this, mDirs);
-        mRcDirectories.setAdapter(adapter);
-
     }
 
-    private List<Directory> getDirectories() {
-        final Map<String, Directory> directories = new LinkedHashMap<>();
+    private void initializeGallery(String path) {
+        final List<Medium> newMedia = getMedia(path);
+        if (newMedia.toString().equals(mMedia.toString())) {
+            return;
+        }
+
+        mMedia.addAll(newMedia);
+    }
+
+
+    private List<Medium> getMedia(String path) {
+        final List<Medium> media = new ArrayList<>();
         final List<String> invalidFiles = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
-            if ((mIsPickVideoIntent) && i == 0)
+            if (mIsPickVideoIntent && i == 0)
                 continue;
 
             Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
@@ -153,9 +144,62 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
 
                 uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
             }
+            final String where = MediaStore.Images.Media.DATA + " like ? ";
+            final String[] args = new String[]{path + "%"};
             final String[] columns = {MediaStore.Images.Media.DATA, MediaStore.Images.Media.DATE_TAKEN};
-            final String order = getSortOrder();
-            final Cursor cursor = getContentResolver().query(uri, columns, null, null, order);
+            final Cursor cursor = getContentResolver().query(uri, columns, where, args, null);
+            final String pattern = Pattern.quote(path) + "/[^/]*";
+
+            if (cursor != null && cursor.moveToFirst()) {
+                final int pathIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
+                do {
+                    final String curPath = cursor.getString(pathIndex);
+                    if (curPath.matches(pattern)) {
+                        final File file = new File(curPath);
+                        if (file.exists()) {
+                            final int dateIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN);
+                            final long timestamp = cursor.getLong(dateIndex);
+                            media.add(new Medium(curPath, (i == 1), timestamp));
+                        } else {
+                            invalidFiles.add(file.getAbsolutePath());
+                        }
+                    }
+                } while (cursor.moveToNext());
+                cursor.close();
+            }
+        }
+
+        Collections.sort(media);
+
+        final String[] invalids = invalidFiles.toArray(new String[invalidFiles.size()]);
+        MediaScannerConnection.scanFile(getApplicationContext(), invalids, null, null);
+
+        return media;
+    }
+
+    private List<Directory> getDirectories() {
+        final Map<String, Directory> directories = new LinkedHashMap<>();
+        final List<String> invalidFiles = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            Uri uriToLoad;
+            if ((mIsPickVideoIntent) && i == 0) {
+                Log.e("GalleryActivity", "Continue: pickVideo");
+                continue;
+            }
+
+            uriToLoad = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            if (i == 1) {
+                if (mIsPickImageIntent) {
+                    Log.e("GalleryActivity", "Continue: pickImage");
+                    continue;
+                }
+
+                uriToLoad = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            }
+
+
+            final String[] columns = {MediaStore.Images.Media.DATA, MediaStore.Images.Media.DATE_TAKEN};
+            final Cursor cursor = getContentResolver().query(uriToLoad, columns, null, null, MediaStore.Images.Media.DATE_TAKEN);
 
             if (cursor != null && cursor.moveToFirst()) {
                 final int pathIndex = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
@@ -175,14 +219,9 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
                         final Directory directory = directories.get(parentDir);
                         final int newImageCnt = directory.getMediaCnt() + 1;
                         directory.setMediaCnt(newImageCnt);
-                        directory.addSize(file.length());
-                    } else if (!mToBeDeleted.contains(parentDir)) {
+                    } else {
                         String dirName = Utils.getFilename(parentDir);
-                        if (mConfig.getIsFolderHidden(parentDir)) {
-                            dirName += " " + getResources().getString(R.string.hidden);
-                        }
-
-                        directories.put(parentDir, new Directory(parentDir, fullPath, dirName, 1, timestamp, file.length()));
+                        directories.put(parentDir, new Directory(parentDir, fullPath, dirName, 1, timestamp));
                     }
                 } while (cursor.moveToNext());
                 cursor.close();
@@ -191,7 +230,6 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
 
         final List<Directory> dirs = new ArrayList<>(directories.values());
         filterDirectories(dirs);
-        Directory.mSorting = mConfig.getDirectorySorting();
         Collections.sort(dirs);
 
         final String[] invalids = invalidFiles.toArray(new String[invalidFiles.size()]);
@@ -201,21 +239,7 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
     }
 
     private void filterDirectories(List<Directory> dirs) {
-        if (!mConfig.getShowHiddenFolders())
-            removeHiddenFolders(dirs);
-
         removeNoMediaFolders(dirs);
-    }
-
-    private void removeHiddenFolders(List<Directory> dirs) {
-        final Set<String> hiddenDirs = mConfig.getHiddenFolders();
-        final List<Directory> ignoreDirs = new ArrayList<>();
-        for (Directory d : dirs) {
-            if (hiddenDirs.contains(d.getPath()))
-                ignoreDirs.add(d);
-        }
-
-        dirs.removeAll(ignoreDirs);
     }
 
     private void removeNoMediaFolders(List<Directory> dirs) {
@@ -238,43 +262,6 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
         dirs.removeAll(ignoreDirs);
     }
 
-    // sort the files at querying too, just to get the correct thumbnail
-    private String getSortOrder() {
-        final int sorting = mConfig.getDirectorySorting();
-        String sortBy = MediaStore.Images.Media.DATE_TAKEN;
-        if ((sorting & Constants.SORT_BY_NAME) != 0) {
-            sortBy = MediaStore.Images.Media.DATA;
-        }
-
-        if ((sorting & Constants.SORT_DESCENDING) != 0) {
-            sortBy += " DESC";
-        }
-        return sortBy;
-    }
-
-    private void deleteDirs() {
-        if (mToBeDeleted == null || mToBeDeleted.isEmpty())
-            return;
-
-        final List<String> updatedFiles = new ArrayList<>();
-        for (String delPath : mToBeDeleted) {
-            final File dir = new File(delPath);
-            if (dir.exists()) {
-                final File[] files = dir.listFiles();
-                for (File f : files) {
-                    updatedFiles.add(f.getAbsolutePath());
-                    f.delete();
-                }
-                updatedFiles.add(dir.getAbsolutePath());
-                dir.delete();
-            }
-        }
-
-        final String[] deletedPaths = updatedFiles.toArray(new String[updatedFiles.size()]);
-        MediaScannerConnection.scanFile(getApplicationContext(), deletedPaths, null, null);
-        mToBeDeleted.clear();
-    }
-
     private boolean isPickImageIntent(Intent intent) {
         return PICK_IMAGE.contentEquals(intent.getAction());
     }
@@ -284,16 +271,31 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
     }
 
     @Override
+    public void onItemClick(Medium medium) {
+        final String curItemPath = medium.getPath();
+        if (mIsPickImageIntent || mIsPickVideoIntent) {
+            if (medium.getIsVideo()) {
+                final Intent result = new Intent();
+                result.setData(Uri.parse(curItemPath));
+                setResult(RESULT_OK, result);
+                finish();
+            } else {
+                Intent intent = new Intent(this, CropImageActivity.class);
+                intent.putExtra(CropImageActivity.ARG_IMAGE_PATH, curItemPath);
+                startActivityForResult(intent, PICK_MEDIA);
+            }
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             if (requestCode == PICK_MEDIA && data != null) {
                 final Intent result = new Intent();
                 final String path = data.getData().getPath();
                 final Uri uri = Uri.fromFile(new File(path));
-                if (mIsPickImageIntent || mIsPickVideoIntent) {
-                    result.setData(uri);
-                    result.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                }
+                result.setData(uri);
+                result.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 setResult(RESULT_OK, result);
                 finish();
@@ -303,11 +305,11 @@ public class GalleryActivity extends SimpleActivity implements OnDirectoryClickL
     }
 
     @Override
-    public void onItemClick(Directory directory) {
-        final Intent intent = new Intent(this, MediaActivity.class);
-        intent.putExtra(Constants.DIRECTORY, directory.getPath());
-        intent.putExtra(Constants.GET_VIDEO_INTENT, mIsPickVideoIntent);
-        intent.putExtra(Constants.GET_IMAGE_INTENT, mIsPickImageIntent);
-        startActivityForResult(intent, PICK_MEDIA);
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.iv_back:
+                onBackPressed();
+                break;
+        }
     }
 }

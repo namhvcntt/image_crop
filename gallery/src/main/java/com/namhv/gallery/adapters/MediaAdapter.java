@@ -10,16 +10,16 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
 import com.namhv.gallery.R;
-import com.namhv.gallery.activities.MediaActivity;
+import com.namhv.gallery.activities.GalleryActivity;
 import com.namhv.gallery.models.Medium;
 
 import java.util.List;
 
 public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaViewHolder> {
-    private final MediaActivity mMediaActivity;
+    private final GalleryActivity mMediaActivity;
     private final List<Medium> mMedia;
 
-    public MediaAdapter(MediaActivity mediaActivity, List<Medium> media) {
+    public MediaAdapter(GalleryActivity mediaActivity, List<Medium> media) {
         this.mMediaActivity = mediaActivity;
         mMedia = media;
     }
@@ -53,7 +53,7 @@ public class MediaAdapter extends RecyclerView.Adapter<MediaAdapter.MediaViewHol
             playOutline = view.findViewById(R.id.play_outline);
         }
 
-        void bindData(final MediaActivity mediaActivity, final Medium medium) {
+        void bindData(final GalleryActivity mediaActivity, final Medium medium) {
             if (medium.getIsVideo()) {
                 playOutline.setVisibility(View.VISIBLE);
             } else {

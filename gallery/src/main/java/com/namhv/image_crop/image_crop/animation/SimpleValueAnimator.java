@@ -1,5 +1,5 @@
 package com.namhv.image_crop.image_crop.animation;
-@SuppressWarnings("unused")
+
 public interface SimpleValueAnimator {
     void startAnimation(long duration);
     void cancelAnimation();

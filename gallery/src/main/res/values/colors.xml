@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#5DAC81</color>
-    <color name="colorPrimaryDark">#4F916D</color>
-    <color name="colorAccent">#5DAC81</color>
+    <color name="colorPrimary">#1b1926</color>
+    <color name="colorPrimaryDark">#07060a</color>
+    <color name="colorAccent">#e41e65</color>
     <color name="windowBackground">#1C1C1C</color>
     <color name="colorButtonNormal">#FFFFFB</color>
     <color name="textColorPrimary">#FFFFFB</color>
-    <color name="overlay">#AA1C1C1C</color>
     <color name="pressed_item_foreground">#33ff6f00</color>
     <color name="activated_item_foreground">#99ff6f00</color>
     <color name="tmb_background">#ff222222</color>
-    <color name="actionbar_grey">#55000000</color>
+
+    <color name="actionbar_color">#1b1926</color>
+    <color name="background_color">#111111</color>
 </resources>

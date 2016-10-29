@@ -1,5 +1,6 @@
 package com.namhv.sample;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -50,21 +51,25 @@ public class SampleActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (PICK_IMAGE == requestCode) {
-            Log.e("SampleActivity", "OnActivityResult:");
-            final String path = data.getData().getPath();
-            final Uri uri = Uri.fromFile(new File(path));
-            Glide.with(this)
-                    .load(uri)
-                    .asBitmap()
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .into(mIvResult);
-        } else if (PICK_VIDEO == requestCode) {
-            final String path = data.getData().getPath();
-            final Uri uri = Uri.fromFile(new File(path));
-            Toast.makeText(this, uri.toString(), Toast.LENGTH_SHORT).show();
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
+        if (Activity.RESULT_OK == resultCode) {
+            if (PICK_IMAGE == requestCode) {
+                Log.e("SampleActivity", "OnActivityResult:");
+                final String path = data.getData().getPath();
+                final Uri uri = Uri.fromFile(new File(path));
+                Glide.with(this)
+                        .load(uri)
+                        .asBitmap()
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .into(mIvResult);
+                return;
+            } else if (PICK_VIDEO == requestCode) {
+                final String path = data.getData().getPath();
+                final Uri uri = Uri.fromFile(new File(path));
+                Toast.makeText(this, uri.toString(), Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
+        super.onActivityResult(requestCode, resultCode, data);
+
     }
 }

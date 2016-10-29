@@ -34,7 +34,7 @@ public class ProgressDialogFragment extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_progress_dialog, null, false);
+        View view = inflater.inflate(R.layout.fragment_progress_dialog, container, false);
         ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.progress);
         progressBar.getIndeterminateDrawable().setColorFilter(getContext().getResources().getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN);
         return view;
@@ -44,11 +44,12 @@ public class ProgressDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         Dialog dialog = super.onCreateDialog(savedInstanceState);
-        dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        // タッチしても消えないように設定
+        Window window = dialog.getWindow();
+        if (null != window) {
+            window.requestFeature(Window.FEATURE_NO_TITLE);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
         dialog.setCancelable(false);
-        // ビュー全体のリスナ
         dialog.setCanceledOnTouchOutside(false);
         dialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
             @Override

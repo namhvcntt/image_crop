@@ -24,6 +24,8 @@
         <item name="android:windowBackground">@color/windowBackground</item>
         <item name="android:textAppearanceButton">@style/AppTheme.Button.Borderless</item>
         <item name="android:textAppearanceSmall">@style/TextAppearance.Small</item>
+        <item name="actionMenuTextColor">@color/colorAccent</item>
+        <item name="android:actionMenuTextColor">@color/colorAccent</item>
     </style>
 
     <style name="AppTheme.Button.Borderless" parent="Widget.AppCompat.Button.Borderless">

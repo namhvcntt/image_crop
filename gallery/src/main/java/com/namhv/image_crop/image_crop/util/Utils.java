@@ -44,7 +44,7 @@ public class Utils {
                     )
             );
         } catch (IOException e) {
-            Logger.e("An error occurred while getting the exif data: " + e.getMessage(), e);
+            e.printStackTrace();
         }
         return 0;
     }

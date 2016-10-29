@@ -2,8 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/camera"
-        android:icon="@mipmap/camera"
-        android:title="@string/open_camera"
-        app:showAsAction="ifRoom"/>
+        android:id="@+id/crop_done"
+        android:title="@string/crop_save"
+        app:showAsAction="always"/>
 </menu>
